@@ -17,7 +17,7 @@ export function Usuarios() {
 
     const { users, roles, usuario } = useManagementContext(); //users
     const rol = parseInt(sessionStorage.getItem("rol"));
-    const [showModal, setShowModal] = useState(0);
+    const [modalDelete, setModalDelete] = useState(false);
     const [newModal, setNewModal] = useState(false);
     const [rolAsign, setRolAsign] = useState("");
     const [id_rol, setId_rol] = useState(null);
@@ -30,23 +30,34 @@ export function Usuarios() {
     const [email, setEmail] = useState("");
     const [respuesta, setRespuesta] = useState("");
     const [username, setUsername] = useState("")
-    const tokenn = Cookies.get("token");
+    //const tokenn = Cookies.get("token");
 
+    // funcion para editar Rol con fetch
+    const eliminarUsuario = async () => {
+
+        const res = await fetch(`http://127.0.0.1:8000/api/usuario/${parseInt(id_rol)}`, { method: "DELETE", headers: { Authorization: `Bearer ${Cookies.get("token")}`, }, })
+        const data = await res.json();
+        setRespuesta(data);
+        setTimeout(() => {
+            setRespuesta('');
+        }, 2000);
+    }
 
     // funcion para nuevo Rol con fetch
     const nuevoUsuario = async () => {
 
-        const res = await fetch("http://127.0.0.1:8002/api/register",
+        const res = await fetch("http://127.0.0.1:8000/api/register",
             {
                 method: "POST",
                 headers: {
-                    Authorization: `Bearer ${tokenn}`,
+                    Authorization: `Bearer ${Cookies.get("token")}`,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ usuario: username, email, id_rol, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, usuario_creacion, usuario_modificacion }),
             })
         const data = await res.json();
         setRespuesta(data);
+        //setRespuesta(data.usuario[0]);
         setTimeout(() => {
             setRespuesta('');
         }, 2000);
@@ -64,6 +75,41 @@ export function Usuarios() {
                         >
                             Crear Nuevo Usuario
                         </Button>
+                    ) : null}
+                    {modalDelete ? (
+                        <>
+                            <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+                                <div className="relative w-full max-w-lg max-h-full bg-white rounded-lg shadow dark:bg-gray-700 pb-6 pt-4 lg:pb-6 lg:pt-4 ">
+                                    <button type="button" onClick={() => setModalDelete(false)} className="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
+                                        <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                                        </svg>
+                                    </button>
+                                    <h3 id="titutlo" className="pb-2 mb-4 border-b-2 text-xl font-medium text-gray-900 dark:text-white px-6 lg:px-8">Confirme su Eliminación</h3>
+                                    <form className="space-y-6 relative px-6 lg:px-8">
+                                        <label className="block text-lg font-medium text-gray-900 dark:text-white">
+                                            ¿Está seguro de que desea Eliminar el Usuario: {username}<span className="font-extrabold"> </span>?
+                                        </label>
+                                        <div id="btn_modal" className="flex justify-end gap-2 mt-4">
+                                            <button
+                                                type="button"
+                                                className="w-fit text-white bg-gray-600 hover:bg-gray-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                                                onClick={() => setModalDelete(false)}
+                                            >NO</button>
+                                            <button
+                                                type="button"
+                                                className="w-fit text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+                                                onClick={() => {
+                                                    eliminarUsuario();
+                                                    setModalDelete(false);
+                                                }}
+                                            >SI</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+                        </>
                     ) : null}
                     {newModal ? (
                         <>
@@ -163,8 +209,6 @@ export function Usuarios() {
                                             </div>
                                         </div>
                                     </div>
-
-
                                     <p className="text-center mt-4 text-green-600 text-sm">{respuesta?.message && <p>{respuesta?.rolname + " " + respuesta?.message}</p>}</p>
                                     <div className="flex items-center justify-end p-6 border-t border-solid border-slate-200 rounded-b">
                                         <button
@@ -185,10 +229,6 @@ export function Usuarios() {
                                             Crear
                                         </Button>
                                     </div>
-
-
-
-
                                 </div>
                             </div>
                             <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
@@ -300,20 +340,11 @@ export function Usuarios() {
                                                     </MenuHandler>
                                                     <MenuList className="dark:bg-gray-800">
                                                         <MenuItem
-                                                        // onClick={() => {
-                                                        //     //setId_rol(e.id);
-                                                        //     //setRol(e.rol);
-                                                        //     //setHabilitado(e.habilitado);
-                                                        //     //setUsuario_modificacion(usuario?.usuario);
-                                                        //     //setUpdateModal(true);
-                                                        // }}
-                                                        >Editar Datos</MenuItem>
-                                                        <MenuItem
-                                                        // onClick={() => {
-                                                        //     //setId_rol(e.id);
-                                                        //     //setRol(e.rol);
-                                                        //     //setModalDelete(true);
-                                                        // }}
+                                                            onClick={() => {
+                                                                setId_rol(e.id);
+                                                                setUsername(e.rol);
+                                                                setModalDelete(true);
+                                                            }}
                                                         >Eliminarlo</MenuItem>
                                                     </MenuList>
                                                 </Menu>
